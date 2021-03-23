@@ -55,7 +55,14 @@ start-sleep 30
 
 $AzKeyVaultCertificatSecret = Get-AzKeyVaultSecret -VaultName $keyvaultName -Name $RunAsAccountName
 
-$AzKeyVaultCertificatSecretBytes = [System.Convert]::FromBase64String($AzKeyVaultCertificatSecret.SecretValueText)
+$secretValueText = '';
+$ssPtr = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($AzKeyVaultCertificatSecret.SecretValue)
+try {
+$secretValueText = [System.Runtime.InteropServices.Marshal]::PtrToStringBSTR($ssPtr)
+} finally {
+[System.Runtime.InteropServices.Marshal]::ZeroFreeBSTR($ssPtr)
+}
+$AzKeyVaultCertificatSecretBytes = [Convert]::FromBase64String($secretValueText)
 
 $certCollection = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2Collection
 $certCollection.Import($AzKeyVaultCertificatSecretBytes,$null,[System.Security.Cryptography.X509Certificates.X509KeyStorageFlags]::Exportable)

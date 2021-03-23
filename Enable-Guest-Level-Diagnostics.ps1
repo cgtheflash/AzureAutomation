@@ -58,8 +58,8 @@ if ($WebhookData) {
                 $Region = $VM.Location
                 $SubAbbrv = $SubId.Substring($SubId.Length - 4)
                 $StorageAccountName = "vmdiag$($Region)$($SubAbbrv)"
-                $StorageAccount = Get-AzStorageAccount -ResourceGroupName $ResourceGroupName -Name $StorageAccountName -InformationAction Ignore -ErrorAction SilentlyContinue
                 $DiagRGName = "RG-GuestDiagnostics"
+                $StorageAccount = Get-AzStorageAccount -ResourceGroupName $DiagRGName -Name $StorageAccountName -InformationAction Ignore -ErrorAction SilentlyContinue
                 $DiagRG = Get-AzResourceGroup -Name $DiagRGName -InformationAction Ignore -ErrorAction SilentlyContinue
                 
                 # If Resource Group for Storage Account doesn't exist yet then create it
@@ -69,7 +69,7 @@ if ($WebhookData) {
 
                 # If Storage Account for this subscription and region doesn't exist yet then create it
                 If (!($StorageAccount)) {
-                    New-AzStorageAccount -ResourceGroupName $ResourceGroupName -AccountName $StorageAccountName -SkuName Standard_LRS -Location $Region
+                    New-AzStorageAccount -ResourceGroupName $DiagRGName -AccountName $StorageAccountName -SkuName Standard_LRS -Location $Region
                 }
 
                 # Enable System Assigned Managed Identity

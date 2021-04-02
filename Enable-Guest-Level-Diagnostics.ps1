@@ -57,16 +57,17 @@ if ($WebhookData) {
       $SubAbbrv = $SubId.Substring($SubId.Length - 4)
       $StorageAccountName = "vmdiag$($Region)$($SubAbbrv)"
       $DiagRGName = "RG-GuestDiagnostics"
-      $StorageAccount = Get-AzStorageAccount -ResourceGroupName $DiagRGName -Name $StorageAccountName -InformationAction Ignore -ErrorAction SilentlyContinue
-      $DiagRG = Get-AzResourceGroup -Name $DiagRGName -InformationAction Ignore -ErrorAction SilentlyContinue
+      # $StorageAccount = Get-AzStorageAccount -ResourceGroupName $DiagRGName -Name $StorageAccountName -InformationAction Ignore -ErrorAction SilentlyContinue
+      $StorageAccounts = Get-AzStorageAccount
+      $ResourceGroups = Get-AzResourceGroup
                 
       # If Resource Group for Storage Account doesn't exist yet then create it
-      If (!($DiagRG)) {
+      If ($ResourceGroups.ResourceGroupName -notcontains $DiagRGName) {
         New-AzResourceGroup -Name $DiagRGName -Location $Region
       }
 
       # If Storage Account for this subscription and region doesn't exist yet then create it
-      If (!($StorageAccount)) {
+      If ($StorageAccounts.StorageAccountName -notcontains $StorageAccountName) {
         New-AzStorageAccount -ResourceGroupName $DiagRGName -AccountName $StorageAccountName -SkuName Standard_LRS -Location $Region
       }
 
@@ -794,7 +795,7 @@ if ($WebhookData) {
 "@
 
           # Generate a SAS token for the agent to use to authenticate with the storage account
-          $sasToken = New-AzStorageAccountSASToken -Service Blob, Table -ResourceType Service, Container, Object -Permission "racwdlup" -Context (Get-AzStorageAccount -ResourceGroupName $storageAccountResourceGroup -AccountName $storageAccountName).Context -ExpiryTime $([System.DateTime]::Now.AddYears(10))
+          $sasToken = New-AzStorageAccountSASToken -Service Blob, Table -ResourceType Service, Container, Object -Permission "racwdlup" -Context (Get-AzStorageAccount -ResourceGroupName $DiagRGName -AccountName $storageAccountName).Context -ExpiryTime $([System.DateTime]::Now.AddYears(10))
 
           # Build the protected settings (storage account SAS token)
           $protectedSettings = "{'storageAccountName': '$storageAccountName', 'storageAccountSasToken': '$sasToken'}"
@@ -847,7 +848,7 @@ if ($WebhookData) {
                       "scheduledTransferPeriod": "PT1H"
                     }
                   ],
-                  "resourceId": "$($Vm.Id)"
+                  "resourceId": "$($Vm.Id)" 
                 },
                 "syslogEvents": {
                   "syslogEventConfiguration": {
